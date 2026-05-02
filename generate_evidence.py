@@ -66,6 +66,13 @@ TRIPLE_DIR = Path(
 )
 TRIPLE_PNG_DIR = TRIPLE_DIR / "INFOGRAPHIC"
 
+# Window-forward analysis: pre-computed CSV from
+# `Skew/ANALISIS/13_SURFACE_REGIME/tension_window_forward_pnl.py`
+WINDOW_FORWARD_CSV = Path(
+    r"C:\Users\Administrator\Desktop\BULK OPTIONSTRAT\ESTRATEGIAS\Skew\ANALISIS"
+    r"\13_SURFACE_REGIME\TENSION_window_forward_results.csv"
+)
+
 GH_REPO = "manumartinb/LIBERATION_SCORE"
 GH_USER_NAME = "manumartinb"
 GH_USER_EMAIL = "manuelmartinbarranco@gmail.com"
@@ -576,6 +583,116 @@ def plot_delta_curve(horizons: pd.DataFrame, out_path: Path) -> None:
 COLOR_MUTED_BAR = DARK_MUTED  # sentinel forward-decl for plots above
 
 
+def plot_window_forward(csv_path: Path, out_path: Path) -> bool:
+    """Render the window-forward chart from pre-computed CSV.
+
+    Layout: 3 rows (SPX filter) x 2 cols (forward 20d, 50d). Each panel:
+    bars at observation days t=0,10,20,30,40 with green=HIGH (P80+) and
+    red=LOW (P20-) TENSION at t. Returns True on success.
+    """
+    if not csv_path.exists():
+        print(f"[WARN] window-forward CSV not found: {csv_path}")
+        return False
+    try:
+        df = pd.read_csv(csv_path)
+    except Exception as exc:
+        print(f"[WARN] failed to read window-forward CSV: {exc}")
+        return False
+
+    filters_order = ["sin filtro", "|SPX|<=3%", "|SPX|<=2%"]
+    forwards = [20, 50]
+    obs_days = sorted([int(t) for t in df["t"].unique()])
+    n_obs = len(obs_days)
+
+    fig, axes = plt.subplots(3, 2, figsize=(13, 11), sharey="col")
+    for i, flt in enumerate(filters_order):
+        for j, fwd in enumerate(forwards):
+            ax = axes[i][j]
+            sub = df[(df["spx_filter"] == flt) & (df["x"] == fwd)].sort_values("t")
+            if sub.empty:
+                ax.text(0.5, 0.5, "no data", ha="center", va="center", color=DARK_MUTED)
+                continue
+            x = np.arange(n_obs)
+            w = 0.36
+            ax.bar(x - w / 2, sub["high_mean"].values, w, color=COLOR_FAV,
+                   edgecolor=DARK_BORDER, linewidth=0.7,
+                   label="HIGH (TENSION P80+)" if (i == 0 and j == 0) else None)
+            ax.bar(x + w / 2, sub["low_mean"].values, w, color=COLOR_ADV,
+                   edgecolor=DARK_BORDER, linewidth=0.7,
+                   label="LOW (TENSION P20-)" if (i == 0 and j == 0) else None)
+            ax.axhline(0, color=DARK_MUTED, linewidth=0.7)
+            ax.set_xticks(x)
+            ax.set_xticklabels([f"t={t}" for t in obs_days], fontsize=9)
+            ax.set_title(f"forward +{fwd}d  |  filtro: {flt}", fontsize=10)
+            if j == 0:
+                ax.set_ylabel(f"Delta PnL en proximos {fwd}d (pts)", fontsize=9)
+            if i == 2:
+                ax.set_xlabel("Observation day t (cuando miramos TENSION)", fontsize=9)
+            # value labels
+            for k, (h, lo, nh, nl) in enumerate(zip(
+                sub["high_mean"].values, sub["low_mean"].values,
+                sub["N_high"].values, sub["N_low"].values
+            )):
+                ax.text(k - w / 2, h, f"{h:+.1f}",
+                        ha="center", va="bottom" if h >= 0 else "top",
+                        color=DARK_TEXT, fontsize=7.5)
+                ax.text(k + w / 2, lo, f"{lo:+.1f}",
+                        ha="center", va="bottom" if lo >= 0 else "top",
+                        color=DARK_TEXT, fontsize=7.5)
+            if i == 0 and j == 0:
+                ax.legend(loc="upper right", fontsize=8, framealpha=0.9,
+                          facecolor=DARK_PANEL, edgecolor=DARK_BORDER)
+
+    fig.suptitle(
+        "TENSION en ventana alta (P80+) vs baja (P20-): cambio de PnL en proximos x dias",
+        fontsize=12, fontweight="bold", color=DARK_TEXT,
+    )
+    fig.text(0.5, 0.945,
+             "Particion por regimen de TENSION en el dia de observacion t. Verde: HIGH (P80+).  Rojo: LOW (P20-).",
+             ha="center", color=DARK_MUTED, fontsize=9)
+    fig.tight_layout(rect=(0, 0, 1, 0.93))
+    fig.savefig(out_path, dpi=140)
+    plt.close(fig)
+    return True
+
+
+def build_table_window_forward_html(csv_path: Path) -> str:
+    """Pretty summary table of HIGH vs LOW spreads at key (t, x, filter) cells."""
+    if not csv_path.exists():
+        return ("<p style='color:#f85149'>"
+                "TENSION_window_forward_results.csv no encontrado.</p>")
+    df = pd.read_csv(csv_path)
+    rows = []
+    for t in [0, 20, 40]:
+        for fwd in [20, 50]:
+            for flt in ["sin filtro", "|SPX|<=3%", "|SPX|<=2%"]:
+                sub = df[(df["t"] == t) & (df["x"] == fwd) & (df["spx_filter"] == flt)]
+                if sub.empty:
+                    continue
+                r = sub.iloc[0]
+                spread = float(r["spread"])
+                spread_color = "#3fb950" if spread > 0 else "#f85149"
+                rows.append([
+                    f't={int(t)}',
+                    f'+{int(fwd)}d',
+                    str(flt),
+                    f'<span style="color:#3fb950">{float(r["high_mean"]):+.1f}</span>',
+                    _fmt_int(r["N_high"]),
+                    _fmt_pct(float(r["high_WR"]), 1),
+                    f'<span style="color:#f85149">{float(r["low_mean"]):+.1f}</span>',
+                    _fmt_int(r["N_low"]),
+                    _fmt_pct(float(r["low_WR"]), 1),
+                    f'<b style="color:{spread_color}">{spread:+.1f}</b>',
+                ])
+    return _table_html(
+        rows,
+        header=["t", "Fwd", "Filtro SPX",
+                "HIGH mean", "N HIGH", "WR HIGH",
+                "LOW mean", "N LOW", "WR LOW",
+                "Spread"],
+    )
+
+
 # ============================== HTML TABLES ==============================
 
 
@@ -844,6 +961,7 @@ def build_evidence_json(
         "year_stability": "evidence/tension_year_stability.png",
         "regime_pnl": "evidence/tension_regime_pnl.png",
         "delta_curve": "evidence/tension_delta_curve.png",
+        "window_forward": "evidence/tension_window_forward.png",
     }
     images.update(triple_pngs)
 
@@ -914,6 +1032,14 @@ def main(push: bool) -> int:
         plot_regime_pnl(regimes, EVIDENCE_DIR / "tension_regime_pnl.png")
         plot_delta_curve(horizons, EVIDENCE_DIR / "tension_delta_curve.png")
 
+        print("[INFO] rendering window-forward chart (HIGH vs LOW TENSION at obs day t)")
+        wf_ok = plot_window_forward(WINDOW_FORWARD_CSV,
+                                    EVIDENCE_DIR / "tension_window_forward.png")
+        if wf_ok:
+            print("[INFO] window-forward chart OK")
+        else:
+            print("[WARN] window-forward chart skipped (CSV missing or unreadable)")
+
         print("[INFO] copying TRIPLE infographic PNGs")
         triple_pngs = copy_triple_pngs(EVIDENCE_DIR)
 
@@ -923,6 +1049,7 @@ def main(push: bool) -> int:
             "deciles": build_table_deciles_html(decs),
             "years": build_table_years_html(years),
             "regimes": build_table_regimes_html(regimes),
+            "window_forward": build_table_window_forward_html(WINDOW_FORWARD_CSV),
         }
         triple_master_html, triple_master_dict = build_table_triple_master_html()
         triple_loco_html, triple_loco_list = build_table_triple_loco_html()

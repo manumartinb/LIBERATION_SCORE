@@ -225,7 +225,7 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
 
   <!-- 1. CONCEPTO -->
   <div class="ev-card" id="ev-concept">
-    <div class="ev-tag">Seccion 1 / 7 &middot; Concepto</div>
+    <div class="ev-tag">Seccion 1 / 8 &middot; Concepto</div>
     <h2>Que mide TENSION_3WAY_MIN</h2>
     <p>
       <strong>TENSION_3WAY_MIN</strong> es un score de regimen daily que mide el grado de "tension"
@@ -252,7 +252,7 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
 
   <!-- 2. METODOLOGIA -->
   <div class="ev-card" id="ev-method">
-    <div class="ev-tag">Seccion 2 / 7 &middot; Metodologia</div>
+    <div class="ev-tag">Seccion 2 / 8 &middot; Metodologia</div>
     <h2>Como se valida la relacion con Batman LT</h2>
     <p>
       Usamos el dataset Batman LT (<strong>DTE 200-1827, anios 2019-2025</strong>) joineado con el score
@@ -281,7 +281,7 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
 
   <!-- 3. SPEARMAN POR HORIZONTE -->
   <div class="ev-card" id="ev-spearman">
-    <div class="ev-tag">Seccion 3 / 7 &middot; Predictividad</div>
+    <div class="ev-tag">Seccion 3 / 8 &middot; Predictividad</div>
     <h2>Spearman r de TENSION_3WAY_MIN vs PnL por horizonte</h2>
     <p>
       La curva muestra como evoluciona la correlacion de rangos entre el score (TENSION_3WAY_MIN, 0-100)
@@ -299,7 +299,7 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
 
   <!-- 4. DECILES Y SPREAD D10-D1 -->
   <div class="ev-card" id="ev-deciles">
-    <div class="ev-tag">Seccion 4 / 7 &middot; Discriminacion por decil</div>
+    <div class="ev-tag">Seccion 4 / 8 &middot; Discriminacion por decil</div>
     <h2>PnL d020 por decil del score</h2>
     <p>
       Particionamos el universo en 10 grupos iguales (deciles) ordenados por score. <strong>D1</strong>
@@ -318,7 +318,7 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
 
   <!-- 5. YEAR STABILITY -->
   <div class="ev-card" id="ev-years">
-    <div class="ev-tag">Seccion 5 / 7 &middot; Estabilidad temporal</div>
+    <div class="ev-tag">Seccion 5 / 8 &middot; Estabilidad temporal</div>
     <h2>Year stability 2019-2025</h2>
     <p>
       Recalculamos Spearman r y delta D10-D1 anio a anio. Una senal robusta debe mantener el signo
@@ -331,7 +331,7 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
 
   <!-- 6. REGIME SPLIT -->
   <div class="ev-card" id="ev-regimes">
-    <div class="ev-tag">Seccion 6 / 7 &middot; Regimen condicional</div>
+    <div class="ev-tag">Seccion 6 / 8 &middot; Regimen condicional</div>
     <h2>PnL condicionado al regimen FAVORABLE / NEUTRAL / ADVERSO</h2>
     <p>
       Misma logica que los umbrales de la grafica del header. Aqui medimos el PnL medio (con CI95%
@@ -346,9 +346,49 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
     </div>
   </div>
 
-  <!-- 7. CONTEXTO TRIPLE -->
+  <!-- 7. WINDOW FORWARD: PnL change conditioned on TENSION regime entering during the trade -->
+  <div class="ev-card" id="ev-window">
+    <div class="ev-tag">Seccion 7 / 8 &middot; Conditioning durante el trade</div>
+    <h2>Cambio de PnL forward cuando entra una ventana de TENSION alta vs baja</h2>
+    <p>
+      Las secciones 3-6 miden la relacion <strong>al momento de la entrada</strong> del trade.
+      Esta seccion responde una pregunta operativamente distinta: <strong>"tengo un trade YA
+      ABIERTO, si entra una ventana donde TENSION se va a P80+ (alta) o a P20- (baja) durante
+      mi trade, como cambia mi PnL en los proximos 20-50 dias respecto al PnL de HOY?"</strong>
+    </p>
+    <p>
+      Para cada trade, observamos el regimen de TENSION en el dia <code>t</code> (0, 10, 20, 30
+      o 40 dias despues de la apertura) y medimos el <strong>delta de PnL</strong> entre ese
+      dia y el dia <code>t + x</code> (con <code>x</code> = 20 o 50). Verde = HIGH (P80+ en t),
+      rojo = LOW (P20- en t).
+    </p>
+    <p>
+      Las tres filas comparan resultados <strong>sin filtro</strong>, con
+      <strong>|SPX|&le;3%</strong> en la ventana, y con <strong>|SPX|&le;2%</strong>. Los
+      filtros estrictos eliminan los trades que se beneficiaron de un movimiento alcista del
+      SPX y son la prueba mas dura: si el spread sigue siendo positivo bajo |SPX|&le;2%, la
+      senal de TENSION es genuina y no un proxy de beta de mercado.
+    </p>
+    <img src="evidence/tension_window_forward.png" alt="Cambio de PnL forward por regimen TENSION en t" loading="lazy">
+    <div id="ev-tbl-window"></div>
+    <div class="ev-callout good" style="margin-top:14px">
+      <strong>Lectura clave:</strong> el spread HIGH menos LOW es positivo en TODAS las celdas
+      y los tres filtros SPX. Sin filtro, t=20, +50d: HIGH +45.32 vs LOW -6.40 (spread
+      <strong>+51.71 pts</strong>). Bajo el filtro mas duro |SPX|&le;2%, t=0, +50d: HIGH -5.05
+      vs LOW -20.12 (spread <strong>+15.07 pts</strong>): aunque ambos regimenes pierden cuando
+      el SPX no sube, LOW pierde mucho mas.
+    </div>
+    <div class="ev-callout warn">
+      <strong>Implicacion operativa:</strong> el regimen de TENSION condiciona el PnL forward
+      INCLUSO durante la vida del trade, no solo en la entrada. Si TENSION cae a P20- mientras
+      tienes una posicion abierta, la distribucion de PnL forward se desplaza claramente a la
+      izquierda. Util como senal de hold/close mid-trade.
+    </div>
+  </div>
+
+  <!-- 8. CONTEXTO TRIPLE -->
   <div class="ev-card" id="ev-triple">
-    <div class="ev-tag">Seccion 7 / 7 &middot; Contexto</div>
+    <div class="ev-tag">Seccion 8 / 8 &middot; Contexto</div>
     <h2>TENSION dentro del sistema TRIPLE (BQI x TS_M3 x TENSION)</h2>
     <p>
       TENSION_3WAY_MIN es <strong>1 de 3 piezas</strong> del sistema completo BATMAN_LIBERATION_TRIPLE.
@@ -547,6 +587,7 @@ async function loadEvidence() {
     'ev-tbl-deciles':        'deciles',
     'ev-tbl-years':          'years',
     'ev-tbl-regimes':        'regimes',
+    'ev-tbl-window':         'window_forward',
     'ev-tbl-triple-master':  'triple_master',
     'ev-tbl-triple-loco':    'triple_loco',
   };
