@@ -87,6 +87,119 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
   padding: 40px;
   font-family: monospace;
 }
+/* ----- Evidence section ----- */
+#evidence {
+  max-width: 1200px;
+  margin: 28px auto 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.ev-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px 24px;
+}
+.ev-card h2 {
+  font-size: 17px;
+  margin: 0 0 4px 0;
+  color: var(--text);
+  font-weight: 600;
+}
+.ev-card .ev-tag {
+  display: inline-block;
+  font-size: 10.5px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  margin-bottom: 10px;
+}
+.ev-card p {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: #b6bec9;
+  margin: 8px 0;
+}
+.ev-card p strong { color: var(--text); }
+.ev-card img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 14px auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.ev-card ul {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: #b6bec9;
+  margin: 8px 0;
+  padding-left: 22px;
+}
+.ev-card ul li { margin: 4px 0; }
+.ev-callout {
+  background: #21262d;
+  border-left: 3px solid #58a6ff;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #c9d1d9;
+  margin: 12px 0;
+}
+.ev-callout.warn { border-left-color: #d29922; }
+.ev-callout.bad  { border-left-color: #f85149; }
+.ev-callout.good { border-left-color: #3fb950; }
+.ev-meta {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 6px;
+}
+.ev-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  margin: 12px 0 4px 0;
+}
+.ev-table th, .ev-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+.ev-table thead th {
+  background: #21262d;
+  color: var(--text);
+  font-weight: 600;
+  border-bottom: 1px solid #444c56;
+}
+.ev-table tbody tr:hover { background: rgba(88, 166, 255, 0.06); }
+.ev-table th:first-child, .ev-table td:first-child { text-align: left; }
+.ev-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 760px) {
+  .ev-grid-2 { grid-template-columns: 1fr; }
+  .ev-card   { padding: 16px 16px; }
+}
+.ev-kpi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.ev-kpi-tile {
+  background: #21262d;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+.ev-kpi-tile .v { font-size: 18px; font-weight: 700; color: var(--text); }
+.ev-kpi-tile .l { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -108,6 +221,170 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
   mostrar/ocultar los subcomponentes individuales. Botones 30D / 90D / 1A / 3A / All en la esquina
   superior izquierda del grafico para cambiar el rango temporal.
 </div>
+<section id="evidence">
+
+  <!-- 1. CONCEPTO -->
+  <div class="ev-card" id="ev-concept">
+    <div class="ev-tag">Seccion 1 / 7 &middot; Concepto</div>
+    <h2>Que mide TENSION_3WAY_MIN</h2>
+    <p>
+      <strong>TENSION_3WAY_MIN</strong> es un score de regimen daily que mide el grado de "tension"
+      simultanea de la superficie de volatilidad SPX a DTE 60. Se calcula como el <strong>minimo</strong>
+      de los percentiles 252d de tres subcomponentes ortogonales de la superficie:
+    </p>
+    <ul>
+      <li><strong>U_curv_15_30_45_pct_252</strong> &mdash; convexidad del smile entre deltas 15, 30 y 45.</li>
+      <li><strong>U_slope_10_40_pct_252</strong> &mdash; pendiente del smile entre deltas 10 y 40.</li>
+      <li><strong>U_skew_25_50_pct_252</strong> &mdash; skew put 25-delta vs ATM.</li>
+    </ul>
+    <p>
+      Un valor alto (cercano a 100) indica que <strong>los tres ejes</strong> de la superficie estan en
+      su zona alta historicamente. El sistema asume que esa "tension acumulada" tiende a liberarse
+      (hipotesis de mean reversion estructural) y eso favorece estructuras Batman LT que se benefician
+      de la normalizacion de la superficie.
+    </p>
+    <div class="ev-callout">
+      <strong>Umbrales operativos:</strong> FAVORABLE &ge; 80 &middot; NEUTRAL 20-80 &middot; ADVERSO &le; 20.
+      Estos cortes son los mismos que la grafica de arriba, el alerta de Telegram y la documentacion
+      `SURFACE_TENSION_RELEASE_DISCOVERY_BATMAN.md`.
+    </div>
+  </div>
+
+  <!-- 2. METODOLOGIA -->
+  <div class="ev-card" id="ev-method">
+    <div class="ev-tag">Seccion 2 / 7 &middot; Metodologia</div>
+    <h2>Como se valida la relacion con Batman LT</h2>
+    <p>
+      Usamos el dataset Batman LT (<strong>DTE 200-1827, anios 2019-2025</strong>) joineado con el score
+      diario. Cada trade del backtest tiene 49 medidas de PnL: <code>PnL_d001_mediana</code> a
+      <code>PnL_d049_mediana</code> (valor mediano del PnL al dia X de vida del trade), evaluadas con
+      datos de mercado reales hasta el cierre del horizonte X.
+    </p>
+    <p>
+      Para cada horizonte d001-d049 calculamos:
+    </p>
+    <ul>
+      <li><strong>Spearman r</strong> entre el score y el PnL en ese horizonte.</li>
+      <li><strong>Bootstrap CI95%</strong> sobre los 11 checkpoints d1, d5, d10..d45, d49 (n_boot=2000, seed=42).</li>
+      <li><strong>Deciles D1-D10</strong> del score: media, mediana, PF y win rate por decil.</li>
+      <li><strong>Year stability</strong>: spearman y delta D10-D1 calculados ANIO por ANIO 2019-2025.</li>
+      <li><strong>Regime split</strong>: PnL d020 y d050 condicionados a FAVORABLE / NEUTRAL / ADVERSO.</li>
+    </ul>
+    <p>
+      Esta seccion utiliza siempre la <strong>vista trade-level</strong> (un punto por trade) salvo que
+      se indique lo contrario. La vista day-level (1 punto por dia, agregando trades de ese dia) da
+      magnitudes ligeramente distintas pero no cambia el signo ni la conclusion.
+    </p>
+    <div id="ev-kpi-overview" class="ev-kpi"></div>
+    <div class="ev-meta">Generado: <span id="ev-generated-at">--</span></div>
+  </div>
+
+  <!-- 3. SPEARMAN POR HORIZONTE -->
+  <div class="ev-card" id="ev-spearman">
+    <div class="ev-tag">Seccion 3 / 7 &middot; Predictividad</div>
+    <h2>Spearman r de TENSION_3WAY_MIN vs PnL por horizonte</h2>
+    <p>
+      La curva muestra como evoluciona la correlacion de rangos entre el score (TENSION_3WAY_MIN, 0-100)
+      y el PnL_d{X}_mediana del trade, conforme avanza el horizonte de evaluacion. Los marcadores con
+      barras representan los 11 checkpoints con bootstrap CI95% (n=2000).
+    </p>
+    <img src="evidence/tension_spearman_curve.png" alt="Spearman r por horizonte" loading="lazy">
+    <p>
+      Lectura: si la curva esta consistentemente por encima de cero y el CI95% del checkpoint inferior
+      tampoco cruza cero, hay evidencia de que el score es un predictor estadisticamente significativo
+      del PnL en ese horizonte.
+    </p>
+    <div id="ev-tbl-spearman"></div>
+  </div>
+
+  <!-- 4. DECILES Y SPREAD D10-D1 -->
+  <div class="ev-card" id="ev-deciles">
+    <div class="ev-tag">Seccion 4 / 7 &middot; Discriminacion por decil</div>
+    <h2>PnL d020 por decil del score</h2>
+    <p>
+      Particionamos el universo en 10 grupos iguales (deciles) ordenados por score. <strong>D1</strong>
+      contiene los trades con TENSION mas baja, <strong>D10</strong> los de TENSION mas alta. Si el
+      score es predictivo, deberia existir una progresion monotona de PnL D1 &lt; D2 &lt; ... &lt; D10.
+    </p>
+    <img src="evidence/tension_decile_bars.png" alt="PnL medio por decil" loading="lazy">
+    <div id="ev-tbl-deciles"></div>
+    <h2 style="margin-top:18px">Spread D10-D1 por horizonte</h2>
+    <p>
+      Spread es la diferencia entre el PnL medio de D10 y D1. Cuanto mayor el spread, mas discrimina el
+      score entre estructuras buenas y malas a ese horizonte.
+    </p>
+    <img src="evidence/tension_delta_curve.png" alt="Delta D10-D1 por horizonte" loading="lazy">
+  </div>
+
+  <!-- 5. YEAR STABILITY -->
+  <div class="ev-card" id="ev-years">
+    <div class="ev-tag">Seccion 5 / 7 &middot; Estabilidad temporal</div>
+    <h2>Year stability 2019-2025</h2>
+    <p>
+      Recalculamos Spearman r y delta D10-D1 anio a anio. Una senal robusta debe mantener el signo
+      positivo en la mayoria de los anios, no concentrar todo el efecto en uno solo. Anios con barra
+      verde son positivos, rojo negativos.
+    </p>
+    <img src="evidence/tension_year_stability.png" alt="Year stability" loading="lazy">
+    <div id="ev-tbl-years"></div>
+  </div>
+
+  <!-- 6. REGIME SPLIT -->
+  <div class="ev-card" id="ev-regimes">
+    <div class="ev-tag">Seccion 6 / 7 &middot; Regimen condicional</div>
+    <h2>PnL condicionado al regimen FAVORABLE / NEUTRAL / ADVERSO</h2>
+    <p>
+      Misma logica que los umbrales de la grafica del header. Aqui medimos el PnL medio (con CI95%
+      bootstrap) de los trades historicos cuando el score estaba en cada zona, en dos horizontes de
+      referencia.
+    </p>
+    <img src="evidence/tension_regime_pnl.png" alt="PnL por regimen" loading="lazy">
+    <div id="ev-tbl-regimes"></div>
+    <div class="ev-callout good" style="margin-top:14px">
+      Si el regimen FAVORABLE muestra mean PnL significativamente superior al NEUTRAL y al ADVERSO en
+      ambos horizontes, hay evidencia operativa para usar el score como gate de entrada.
+    </div>
+  </div>
+
+  <!-- 7. CONTEXTO TRIPLE -->
+  <div class="ev-card" id="ev-triple">
+    <div class="ev-tag">Seccion 7 / 7 &middot; Contexto</div>
+    <h2>TENSION dentro del sistema TRIPLE (BQI x TS_M3 x TENSION)</h2>
+    <p>
+      TENSION_3WAY_MIN es <strong>1 de 3 piezas</strong> del sistema completo BATMAN_LIBERATION_TRIPLE.
+      El TRIPLE combina TENSION (componente regime daily) con dos scores per-trade: <strong>BQI_V4</strong>
+      (calidad estructural) y <strong>TS_M3</strong> (term structure). Los gates operativos
+      <code>LIBERATION_TRIPLE_GATE_P80</code> exigen los tres componentes simultaneamente en sus
+      respectivos top P80.
+    </p>
+    <img src="evidence/triple_headline_scoreboard.png" alt="TRIPLE scoreboard" loading="lazy">
+    <h2 style="margin-top:18px">Resumen comparativo (PnL d020)</h2>
+    <p>
+      Universo completo vs componentes individuales (TENSION/BQI/TS top P80) vs TRIPLE combinado y
+      TRIPLE_BAD (los tres en zona adversa, control negativo).
+    </p>
+    <div id="ev-tbl-triple-master"></div>
+    <h2 style="margin-top:18px">Monotonia de deciles del TRIPLE</h2>
+    <img src="evidence/triple_decile_monotonicity.png" alt="Monotonia deciles TRIPLE" loading="lazy">
+    <h2 style="margin-top:18px">LOCO: que pasa si quitamos un componente</h2>
+    <p>
+      Leave-One-Component-Out: tomamos el TRIPLE_GOOD_P80 (mean +21.91 d020, PF 11.95) y vamos
+      quitando un componente cada vez. <strong>Drop TEN</strong> (quitar TENSION) destroza el sistema:
+      mean cae 4.69 pts y PF cae 7.36. Drop BQI cae solo 0.45 mean. <strong>TENSION es el componente
+      mas insustituible del TRIPLE</strong> &mdash; precisamente el que la grafica de arriba publica.
+    </p>
+    <img src="evidence/triple_loco_comparison.png" alt="LOCO TRIPLE" loading="lazy">
+    <div id="ev-tbl-triple-loco"></div>
+    <div class="ev-callout warn" style="margin-top:14px">
+      Atencion: la evidencia de las secciones 3-6 es de TENSION <strong>aislado</strong>. La evidencia
+      del TRIPLE completo (este bloque) requiere los 3 componentes y SOLO se aplica a estructuras Batman
+      LT que pasan los 3 gates simultaneamente. La grafica del header publica unicamente TENSION (el
+      componente daily de regimen).
+    </div>
+  </div>
+
+</section>
+
 <div class="footer">
   Last update: <span id="updated-at">--</span> &middot;
   <a href="https://github.com/manumartinb/LIBERATION_SCORE" target="_blank" rel="noopener">repo</a>
@@ -226,6 +503,63 @@ async function load() {
   });
 }
 load();
+
+async function loadEvidence() {
+  let ev;
+  try {
+    const r = await fetch('evidence/evidence.json?_=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    ev = await r.json();
+  } catch (e) {
+    console.warn('evidence load failed:', e);
+    return;
+  }
+
+  // Header meta
+  const ga = document.getElementById('ev-generated-at');
+  if (ga) ga.textContent = ev.generated_at || '--';
+
+  // KPI tiles in section 2
+  const kpi = document.getElementById('ev-kpi-overview');
+  if (kpi && ev.tension && ev.tension.headline) {
+    const h = ev.tension.headline;
+    const t = ev.triple && ev.triple.master ? ev.triple.master : null;
+    const tiles = [
+      { l: 'N trades',      v: ev.input ? ev.input.n_trades.toLocaleString() : '--' },
+      { l: 'N dias',        v: ev.input ? ev.input.n_days.toLocaleString() : '--' },
+      { l: 'Anios',         v: ev.input ? (ev.input.date_min.slice(0,4) + '-' + ev.input.date_max.slice(0,4)) : '--' },
+      { l: 'Spearman d020', v: (typeof h.spearman === 'number') ? h.spearman.toFixed(3) : '--' },
+      { l: 'Delta D10-D1',  v: (typeof h.delta_d10_d1 === 'number') ? (h.delta_d10_d1.toFixed(1) + ' pts') : '--' },
+      { l: 'PF D10/D1',     v: (typeof h.pf_ratio_d10_d1 === 'number') ? h.pf_ratio_d10_d1.toFixed(2) : '--' },
+    ];
+    if (t && t.triple_p80 && t.universo) {
+      tiles.push({ l: 'TRIPLE_P80 PF',  v: t.triple_p80.PF.toFixed(2) + ' (univ ' + t.universo.PF.toFixed(2) + ')' });
+      tiles.push({ l: 'TRIPLE_P80 N',   v: t.triple_p80.N.toLocaleString() });
+    }
+    kpi.innerHTML = tiles.map(t =>
+      '<div class="ev-kpi-tile"><div class="v">' + t.v + '</div><div class="l">' + t.l + '</div></div>'
+    ).join('');
+  }
+
+  // Inject HTML tables
+  const tableMap = {
+    'ev-tbl-spearman':       'spearman',
+    'ev-tbl-deciles':        'deciles',
+    'ev-tbl-years':          'years',
+    'ev-tbl-regimes':        'regimes',
+    'ev-tbl-triple-master':  'triple_master',
+    'ev-tbl-triple-loco':    'triple_loco',
+  };
+  if (ev.tables_html) {
+    for (const [elId, key] of Object.entries(tableMap)) {
+      const el = document.getElementById(elId);
+      if (el && typeof ev.tables_html[key] === 'string') {
+        el.innerHTML = ev.tables_html[key];
+      }
+    }
+  }
+}
+loadEvidence();
 </script>
 </body>
 </html>
