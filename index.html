@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>LIBERATION SCORE - Surface Regime</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --text: #c9d1d9;
+  --muted: #8b949e;
+  --border: #30363d;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 16px;
+}
+.header {
+  max-width: 1200px;
+  margin: 0 auto 16px auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+h1 { font-size: 18px; margin: 0; font-weight: 600; }
+.subtitle { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.latest {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  min-width: 220px;
+}
+.latest .v { font-size: 26px; font-weight: 700; }
+.latest .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+.regime {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.regime.FAVORABLE { background: rgba(26,127,55,0.20); color: #3fb950; }
+.regime.NEUTRAL   { background: rgba(154,103,0,0.20); color: #d29922; }
+.regime.ADVERSO   { background: rgba(207,34,46,0.20); color: #f85149; }
+#chart {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+}
+.note {
+  max-width: 1200px;
+  margin: 12px auto;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+.note strong { color: var(--text); }
+.footer {
+  max-width: 1200px;
+  margin: 14px auto 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+.footer a { color: #58a6ff; text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+.error {
+  color: #f85149;
+  text-align: center;
+  padding: 40px;
+  font-family: monospace;
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>LIBERATION SCORE - Surface Regime</h1>
+    <div class="subtitle">Componente daily/regime del sistema BATMAN_LIBERATION_TRIPLE - SPX 10:30 ET, DTE 60</div>
+  </div>
+  <div class="latest">
+    <div class="label">Ultimo dato <span id="latest-date"></span></div>
+    <div><span class="v" id="latest-value">--</span><span class="regime" id="latest-regime">--</span></div>
+  </div>
+</div>
+<div id="chart" style="height: 580px;"></div>
+<div class="note">
+  <strong>TENSION_3WAY_MIN</strong> es el minimo entre los percentiles 252d de los 3 subcomponentes
+  (curv 15-30-45, slope 10-40, skew 25-50). <strong>FAVORABLE</strong> &gt;= 80 (verde),
+  <strong>ADVERSO</strong> &lt;= 20 (rojo), <strong>NEUTRAL</strong> 20-80. Click en la leyenda para
+  mostrar/ocultar los subcomponentes individuales. Botones 30D / 90D / 1A / 3A / All en la esquina
+  superior izquierda del grafico para cambiar el rango temporal.
+</div>
+<div class="footer">
+  Last update: <span id="updated-at">--</span> &middot;
+  <a href="https://github.com/manumartinb/LIBERATION_SCORE" target="_blank" rel="noopener">repo</a>
+</div>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script>
+async function load() {
+  let d;
+  try {
+    const r = await fetch('data.json?_=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    d = await r.json();
+  } catch (e) {
+    document.getElementById('chart').innerHTML = '<div class="error">Error cargando data.json: ' + e.message + '</div>';
+    return;
+  }
+
+  document.getElementById('latest-date').textContent = '(' + d.latest.date + ')';
+  document.getElementById('latest-value').textContent = d.latest.tension.toFixed(1);
+  const regEl = document.getElementById('latest-regime');
+  regEl.textContent = d.latest.regime;
+  regEl.className = 'regime ' + d.latest.regime;
+  document.getElementById('updated-at').textContent = d.generated_at;
+
+  const traces = [
+    {
+      x: d.dates, y: d.tension, type: 'scatter', mode: 'lines',
+      name: 'TENSION_3WAY_MIN',
+      line: { color: '#58a6ff', width: 2.2 },
+      hovertemplate: '%{x|%Y-%m-%d}<br><b>TENSION</b>: %{y:.1f}<extra></extra>',
+    },
+    {
+      x: d.dates, y: d.curv, type: 'scatter', mode: 'lines',
+      name: 'curv 15-30-45',
+      line: { color: '#f0b76b', width: 1.2, dash: 'dot' },
+      visible: 'legendonly',
+      hovertemplate: '%{x|%Y-%m-%d}<br><b>curv</b>: %{y:.1f}<extra></extra>',
+    },
+    {
+      x: d.dates, y: d.slope, type: 'scatter', mode: 'lines',
+      name: 'slope 10-40',
+      line: { color: '#a371f7', width: 1.2, dash: 'dot' },
+      visible: 'legendonly',
+      hovertemplate: '%{x|%Y-%m-%d}<br><b>slope</b>: %{y:.1f}<extra></extra>',
+    },
+    {
+      x: d.dates, y: d.skew, type: 'scatter', mode: 'lines',
+      name: 'skew 25-50',
+      line: { color: '#7ee787', width: 1.2, dash: 'dot' },
+      visible: 'legendonly',
+      hovertemplate: '%{x|%Y-%m-%d}<br><b>skew</b>: %{y:.1f}<extra></extra>',
+    },
+  ];
+
+  const layout = {
+    paper_bgcolor: '#161b22',
+    plot_bgcolor: '#161b22',
+    font: { color: '#c9d1d9', family: '-apple-system, sans-serif', size: 12 },
+    margin: { t: 40, r: 20, b: 50, l: 55 },
+    xaxis: {
+      gridcolor: '#21262d',
+      linecolor: '#30363d',
+      type: 'date',
+      rangeselector: {
+        buttons: [
+          { count: 30, label: '30D', step: 'day',   stepmode: 'backward' },
+          { count: 90, label: '90D', step: 'day',   stepmode: 'backward' },
+          { count: 1,  label: '1A',  step: 'year',  stepmode: 'backward' },
+          { count: 3,  label: '3A',  step: 'year',  stepmode: 'backward' },
+          { step: 'all', label: 'All' },
+        ],
+        bgcolor: '#21262d',
+        activecolor: '#1f6feb',
+        font: { color: '#c9d1d9', size: 11 },
+        bordercolor: '#30363d',
+        borderwidth: 1,
+      },
+      rangeslider: { visible: false },
+    },
+    yaxis: {
+      range: [0, 100],
+      gridcolor: '#21262d',
+      linecolor: '#30363d',
+      title: { text: 'Percentil 252d', font: { size: 12 } },
+      tickvals: [0, 20, 40, 60, 80, 100],
+    },
+    shapes: [
+      { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 80, y1: 100, fillcolor: '#1a7f37', opacity: 0.10, line: { width: 0 }, layer: 'below' },
+      { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 20, y1: 80,  fillcolor: '#9a6700', opacity: 0.06, line: { width: 0 }, layer: 'below' },
+      { type: 'rect', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 0,  y1: 20,  fillcolor: '#cf222e', opacity: 0.10, line: { width: 0 }, layer: 'below' },
+      { type: 'line', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 80, y1: 80, line: { color: '#1a7f37', width: 1, dash: 'dash' }, layer: 'below' },
+      { type: 'line', xref: 'paper', x0: 0, x1: 1, yref: 'y', y0: 20, y1: 20, line: { color: '#cf222e', width: 1, dash: 'dash' }, layer: 'below' },
+    ],
+    annotations: [
+      { xref: 'paper', x: 1, xanchor: 'right', yref: 'y', y: 90, text: 'FAVORABLE', font: { color: '#3fb950', size: 10 }, showarrow: false, opacity: 0.7 },
+      { xref: 'paper', x: 1, xanchor: 'right', yref: 'y', y: 50, text: 'NEUTRAL',   font: { color: '#d29922', size: 10 }, showarrow: false, opacity: 0.7 },
+      { xref: 'paper', x: 1, xanchor: 'right', yref: 'y', y: 10, text: 'ADVERSO',   font: { color: '#f85149', size: 10 }, showarrow: false, opacity: 0.7 },
+    ],
+    legend: { orientation: 'h', y: -0.18, x: 0.5, xanchor: 'center', bgcolor: 'rgba(0,0,0,0)' },
+    hovermode: 'x unified',
+  };
+
+  // Default range: ultimos 90 dias
+  if (d.dates.length > 0) {
+    const last = d.dates[d.dates.length - 1];
+    const lastDt = new Date(last);
+    const start = new Date(lastDt);
+    start.setDate(start.getDate() - 90);
+    layout.xaxis.range = [start.toISOString().slice(0, 10), last];
+  }
+
+  Plotly.newPlot('chart', traces, layout, {
+    responsive: true,
+    displaylogo: false,
+    modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'],
+  });
+}
+load();
+</script>
+</body>
+</html>
