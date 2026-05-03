@@ -346,6 +346,35 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
     <div><span class="v" id="latest-value">--</span><span class="regime" id="latest-regime">--</span></div>
   </div>
 </div>
+<div class="oos-panel">
+  <div class="oos-tag">OOS 2026 &middot; Validacion live</div>
+  <h2>Backtest Out-of-Sample 2026 &mdash; 2 ene a 13 mar 2026 &middot; 422 trades &middot; 46 dias</h2>
+  <div class="oos-grid">
+    <div class="oos-cell">
+      <div class="oos-label">Universo</div>
+      <div class="oos-stats">N=<b>422</b> &nbsp; mean=<b>&minus;5.8</b><br>WR=<b>23.2%</b> &nbsp; PF=<b>0.59</b></div>
+    </div>
+    <div class="oos-cell fav">
+      <div class="oos-label">TENSION FAV (&ge;80)</div>
+      <div class="oos-stats">N=<b>34</b> &nbsp; mean=<b>+18.8</b><br>WR=<b>73.5%</b> &nbsp; PF=<b>3.60</b></div>
+    </div>
+    <div class="oos-cell adv">
+      <div class="oos-label">TENSION ADV (&le;20)</div>
+      <div class="oos-stats">N=<b>18</b> &nbsp; mean=<b>&minus;6.3</b><br>WR=<b>16.7%</b> &nbsp; PF=<b>0.05</b></div>
+    </div>
+  </div>
+  <p class="oos-comment">
+    <strong>4 dias FAV: 26 feb + 9-11 marzo.</strong> El cohort FAV revirtio la perdida del universo (mean &minus;5.8 &rarr; <strong>+18.8 pts</strong>), con WR 73.5% y PF 3.60. La unica perdida en dias FAV fue el 26 feb (TENSION 81.75 al limite del umbral). El cluster Mar 9-11 (TENSION &ge;80 + PUT_SKEW &ge;90 simultaneo) entrego mean PnL +33 a +41 pts/dia. Metrica: <code>PnL_fwd_pts_25_mediana</code> (25% del DTE forward, ultimo disponible &mdash; los trades de marzo 2026 aun no maduraron a horizontes mas largos).
+  </p>
+</div>
+<div id="chart" style="height: 580px;"></div>
+<div class="note">
+  <strong>TENSION_3WAY_MIN</strong> es el minimo entre los percentiles 252d de los 3 subcomponentes
+  (curv 15-30-45, slope 10-40, skew 25-50). <strong>FAVORABLE</strong> &gt;= 80 (verde),
+  <strong>ADVERSO</strong> &lt;= 20 (rojo), <strong>NEUTRAL</strong> 20-80. Click en la leyenda para
+  mostrar/ocultar los subcomponentes individuales. Botones 30D / 90D / 1A / 3A / All en la esquina
+  superior izquierda del grafico para cambiar el rango temporal.
+</div>
 <div class="rules" id="rules">
   <h2>Como usar TENSION (operativa)</h2>
   <div class="rules-baseline">
@@ -404,35 +433,6 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
 
   <h3>Caveat</h3>
   <p>FAV bate al universo en 4 de 7 anios. Fallos: 2021 (FAV mean -9), 2022 (sin FAV).</p>
-</div>
-<div class="oos-panel">
-  <div class="oos-tag">OOS 2026 &middot; Validacion live</div>
-  <h2>Backtest Out-of-Sample 2026 &mdash; 2 ene a 13 mar 2026 &middot; 422 trades &middot; 46 dias</h2>
-  <div class="oos-grid">
-    <div class="oos-cell">
-      <div class="oos-label">Universo</div>
-      <div class="oos-stats">N=<b>422</b> &nbsp; mean=<b>&minus;5.8</b><br>WR=<b>23.2%</b> &nbsp; PF=<b>0.59</b></div>
-    </div>
-    <div class="oos-cell fav">
-      <div class="oos-label">TENSION FAV (&ge;80)</div>
-      <div class="oos-stats">N=<b>34</b> &nbsp; mean=<b>+18.8</b><br>WR=<b>73.5%</b> &nbsp; PF=<b>3.60</b></div>
-    </div>
-    <div class="oos-cell adv">
-      <div class="oos-label">TENSION ADV (&le;20)</div>
-      <div class="oos-stats">N=<b>18</b> &nbsp; mean=<b>&minus;6.3</b><br>WR=<b>16.7%</b> &nbsp; PF=<b>0.05</b></div>
-    </div>
-  </div>
-  <p class="oos-comment">
-    <strong>4 dias FAV: 26 feb + 9-11 marzo.</strong> El cohort FAV revirtio la perdida del universo (mean &minus;5.8 &rarr; <strong>+18.8 pts</strong>), con WR 73.5% y PF 3.60. La unica perdida en dias FAV fue el 26 feb (TENSION 81.75 al limite del umbral). El cluster Mar 9-11 (TENSION &ge;80 + PUT_SKEW &ge;90 simultaneo) entrego mean PnL +33 a +41 pts/dia. Metrica: <code>PnL_fwd_pts_25_mediana</code> (25% del DTE forward, ultimo disponible &mdash; los trades de marzo 2026 aun no maduraron a horizontes mas largos).
-  </p>
-</div>
-<div id="chart" style="height: 580px;"></div>
-<div class="note">
-  <strong>TENSION_3WAY_MIN</strong> es el minimo entre los percentiles 252d de los 3 subcomponentes
-  (curv 15-30-45, slope 10-40, skew 25-50). <strong>FAVORABLE</strong> &gt;= 80 (verde),
-  <strong>ADVERSO</strong> &lt;= 20 (rojo), <strong>NEUTRAL</strong> 20-80. Click en la leyenda para
-  mostrar/ocultar los subcomponentes individuales. Botones 30D / 90D / 1A / 3A / All en la esquina
-  superior izquierda del grafico para cambiar el rango temporal.
 </div>
 <section id="evidence">
 
