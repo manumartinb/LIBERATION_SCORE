@@ -526,6 +526,24 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
       tienes una posicion abierta, la distribucion de PnL forward se desplaza claramente a la
       izquierda. Util como senal de hold/close mid-trade.
     </div>
+
+    <h2 style="margin-top:24px">Curva continua HIGH (P80+) vs LOW (P20-) al entry, horizontes d001-d050</h2>
+    <p>
+      Mismo concepto que la grafica de arriba pero <strong>continuo en el horizonte forward</strong>:
+      en vez de mostrar solo +20d y +50d como puntos discretos, traza el PnL medio Batman LT
+      <strong>cada dia desde d001 hasta d050</strong> para los trades abiertos con
+      <span style="color:#3fb950"><strong>TENSION &ge; 80</strong></span> al entry vs los abiertos con
+      <span style="color:#f85149"><strong>TENSION &le; 20</strong></span> al entry. Bandas
+      sombreadas = CI95% bootstrap (n=500). Lineas verticales punteadas = los 2 horizontes
+      discretos del grafico de arriba (d020, d050).
+    </p>
+    <img src="evidence/tension_continuous_curve.png" alt="Continuous curve P80 vs P20 TENSION" loading="lazy">
+    <div class="ev-callout warn" style="margin-top:14px">
+      Lectura: si las dos bandas <strong>NO se solapan</strong> a partir de algun horizonte, hay
+      separacion estadistica significativa entre ambos cohortes. Si la separacion crece con el
+      horizonte, el efecto del regimen al entry tiene <strong>persistencia temporal</strong> en el
+      PnL Batman LT.
+    </div>
   </div>
 
   <!-- 8. CONTEXTO TRIPLE -->

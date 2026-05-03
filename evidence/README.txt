@@ -1,4 +1,4 @@
-Evidence regenerated: 2026-05-03 00:53 CEST
+Evidence regenerated: 2026-05-03 13:59 CEST
 Input: [MAIN RANKEO LT]_combined_BATMAN_mediana_w_stats_w_vix_OWN_ALLDAYS.csv
 N trades: 45,805  N days: 1,522
 Date range: 2019-06-25 to 2025-08-14
