@@ -6,7 +6,7 @@ update_dashboard.py
 Genera data.json del dashboard LIBERATION_SCORE y hace push a GitHub Pages.
 
 Lee SURFACE_SKEW_CONCAVITY_COMPONENTS_DAILY.csv (output de V8.0 SKEW PIPELINE)
-y publica en https://manumartinb.github.io/LIBERATION_SCORE/
+y publica en https://manumartinb.github.io/LIBERATION_SCORE_BATMAN_LT/
 
 Token leido de env var GH_DASHBOARD_TOKEN (User scope, set via setx).
 
@@ -34,7 +34,7 @@ SOURCE_CSV = Path(
 DASHBOARD_DIR = Path(r"C:\Users\Administrator\Desktop\LIBERATION_SCORE_DASHBOARD")
 DATA_JSON = DASHBOARD_DIR / "data.json"
 
-GH_REPO = "manumartinb/LIBERATION_SCORE"
+GH_REPO = "manumartinb/LIBERATION_SCORE_BATMAN_LT"
 GH_USER_NAME = "manumartinb"
 GH_USER_EMAIL = "manuelmartinbarranco@gmail.com"
 TOKEN_ENV = "GH_DASHBOARD_TOKEN"
@@ -176,7 +176,7 @@ def push_to_github() -> int:
         print(f"[X] push failed: {sanitized.strip()}")
         return 1
 
-    print(f"[OK] pushed to https://manumartinb.github.io/LIBERATION_SCORE/")
+    print(f"[OK] pushed to https://manumartinb.github.io/LIBERATION_SCORE_BATMAN_LT/")
     return 0
 
 

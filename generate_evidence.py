@@ -23,7 +23,7 @@ Manual regen with:
     python generate_evidence.py --push     # local + git push to GitHub Pages
 
 Auth: env var GH_DASHBOARD_TOKEN (User scope), Contents:write fine-grained
-PAT scoped to manumartinb/LIBERATION_SCORE.
+PAT scoped to manumartinb/LIBERATION_SCORE_BATMAN_LT.
 """
 from __future__ import annotations
 
@@ -73,7 +73,7 @@ WINDOW_FORWARD_CSV = Path(
     r"\13_SURFACE_REGIME\TENSION_window_forward_results.csv"
 )
 
-GH_REPO = "manumartinb/LIBERATION_SCORE"
+GH_REPO = "manumartinb/LIBERATION_SCORE_BATMAN_LT"
 GH_USER_NAME = "manumartinb"
 GH_USER_EMAIL = "manuelmartinbarranco@gmail.com"
 TOKEN_ENV = "GH_DASHBOARD_TOKEN"
@@ -1150,7 +1150,7 @@ def git_push() -> int:
         print(f"[X] push failed: {sanitized.strip()}")
         return 1
 
-    print(f"[OK] pushed to https://manumartinb.github.io/LIBERATION_SCORE/")
+    print(f"[OK] pushed to https://manumartinb.github.io/LIBERATION_SCORE_BATMAN_LT/")
     return 0
 
 

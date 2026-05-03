@@ -3,7 +3,7 @@
 Pagina web con grafico interactivo del componente **regime/daily** del sistema
 `BATMAN_LIBERATION_TRIPLE` (SPX, DTE 60, snapshot 10:30 ET).
 
-URL publica: https://manumartinb.github.io/LIBERATION_SCORE/
+URL publica: https://manumartinb.github.io/LIBERATION_SCORE_BATMAN_LT/
 
 ## Que muestra
 
