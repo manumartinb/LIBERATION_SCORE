@@ -283,6 +283,56 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
 }
 .rules .row-up { color: #3fb950; }
 .rules .row-down { color: #f85149; }
+/* ----- OOS 2026 panel ----- */
+.oos-panel {
+  max-width: 1200px;
+  margin: 18px auto;
+  background: linear-gradient(135deg, rgba(63,185,80,0.07) 0%, #161b22 55%, #161b22 100%);
+  border: 1px solid var(--border);
+  border-left: 3px solid #3fb950;
+  border-radius: 6px;
+  padding: 14px 20px 12px 20px;
+}
+.oos-panel .oos-tag {
+  font-size: 10.5px; color: #3fb950;
+  text-transform: uppercase; letter-spacing: 0.7px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-bottom: 4px;
+}
+.oos-panel .oos-tag::before {
+  content: ""; display: inline-block; width: 6px; height: 6px;
+  background: #3fb950; border-radius: 50%; box-shadow: 0 0 6px #3fb950;
+}
+.oos-panel h2 {
+  font-size: 14px; margin: 2px 0 10px 0; color: #f0f6fc; font-weight: 600;
+}
+.oos-panel .oos-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;
+}
+.oos-panel .oos-cell {
+  background: #21262d; border: 1px solid var(--border);
+  border-radius: 4px; padding: 9px 12px;
+}
+.oos-panel .oos-cell .oos-label {
+  font-size: 10.5px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; font-weight: 600;
+}
+.oos-panel .oos-cell.fav .oos-label { color: #3fb950; }
+.oos-panel .oos-cell.adv .oos-label { color: #f85149; }
+.oos-panel .oos-cell .oos-stats {
+  font-size: 12px; color: #c9d1d9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; line-height: 1.6;
+}
+.oos-panel .oos-cell .oos-stats b { color: #f0f6fc; }
+.oos-panel .oos-comment {
+  font-size: 12.5px; color: var(--muted);
+  margin: 10px 0 0 0; line-height: 1.55;
+}
+.oos-panel .oos-comment strong { color: #c9d1d9; }
+.oos-panel .oos-comment code {
+  background: #0d1117; border: 1px solid var(--border);
+  padding: 1px 5px; border-radius: 3px; font-size: 11px; color: #c9d1d9;
+}
 </style>
 </head>
 <body>
@@ -354,6 +404,27 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
 
   <h3>Caveat</h3>
   <p>FAV bate al universo en 4 de 7 anios. Fallos: 2021 (FAV mean -9), 2022 (sin FAV).</p>
+</div>
+<div class="oos-panel">
+  <div class="oos-tag">OOS 2026 &middot; Validacion live</div>
+  <h2>Backtest Out-of-Sample 2026 &mdash; 2 ene a 13 mar 2026 &middot; 422 trades &middot; 46 dias</h2>
+  <div class="oos-grid">
+    <div class="oos-cell">
+      <div class="oos-label">Universo</div>
+      <div class="oos-stats">N=<b>422</b> &nbsp; mean=<b>&minus;5.8</b><br>WR=<b>23.2%</b> &nbsp; PF=<b>0.59</b></div>
+    </div>
+    <div class="oos-cell fav">
+      <div class="oos-label">TENSION FAV (&ge;80)</div>
+      <div class="oos-stats">N=<b>34</b> &nbsp; mean=<b>+18.8</b><br>WR=<b>73.5%</b> &nbsp; PF=<b>3.60</b></div>
+    </div>
+    <div class="oos-cell adv">
+      <div class="oos-label">TENSION ADV (&le;20)</div>
+      <div class="oos-stats">N=<b>18</b> &nbsp; mean=<b>&minus;6.3</b><br>WR=<b>16.7%</b> &nbsp; PF=<b>0.05</b></div>
+    </div>
+  </div>
+  <p class="oos-comment">
+    <strong>4 dias FAV: 26 feb + 9-11 marzo.</strong> El cohort FAV revirtio la perdida del universo (mean &minus;5.8 &rarr; <strong>+18.8 pts</strong>), con WR 73.5% y PF 3.60. La unica perdida en dias FAV fue el 26 feb (TENSION 81.75 al limite del umbral). El cluster Mar 9-11 (TENSION &ge;80 + PUT_SKEW &ge;90 simultaneo) entrego mean PnL +33 a +41 pts/dia. Metrica: <code>PnL_fwd_pts_25_mediana</code> (25% del DTE forward, ultimo disponible &mdash; los trades de marzo 2026 aun no maduraron a horizontes mas largos).
+  </p>
 </div>
 <div id="chart" style="height: 580px;"></div>
 <div class="note">
