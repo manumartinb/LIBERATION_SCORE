@@ -199,11 +199,12 @@ def load_dataset() -> Dataset:
 
     pnl_cols = [f"PnL_d{d:03d}_mediana" for d in WINDOWS]
     extra_cols = ["PnL_d050_mediana"]   # used by regime split (second horizon)
-    needed = [DATE_COL, SCORE_COL] + pnl_cols + extra_cols
+    score_extras = ["LIBERATION_SCORE"]   # used by Section 8 LT-only decile chart
+    needed = [DATE_COL, SCORE_COL] + pnl_cols + extra_cols + score_extras
     df = pd.read_csv(INPUT_CSV, usecols=lambda c: c in set(needed), low_memory=False)
     df[DATE_COL] = pd.to_datetime(df[DATE_COL], errors="coerce")
     df[SCORE_COL] = pd.to_numeric(df[SCORE_COL], errors="coerce")
-    for c in pnl_cols + [c for c in extra_cols if c in df.columns]:
+    for c in pnl_cols + [c for c in extra_cols if c in df.columns] + [c for c in score_extras if c in df.columns]:
         df[c] = pd.to_numeric(df[c], errors="coerce")
 
     df = df.dropna(subset=[DATE_COL, SCORE_COL]).copy()
@@ -993,20 +994,227 @@ def build_table_triple_loco_html() -> Tuple[str, List[Dict[str, float]]]:
 # ============================== ORCHESTRATION ==============================
 
 
-def copy_triple_pngs(out_dir: Path) -> Dict[str, str]:
-    mapping = {
-        "01_decile_monotonicity.png": "triple_decile_monotonicity.png",
-        "03_loco_comparison.png": "triple_loco_comparison.png",
-        "08_headline_scoreboard.png": "triple_headline_scoreboard.png",
-    }
-    out_paths: Dict[str, str] = {}
-    for src_name, dst_name in mapping.items():
-        src = TRIPLE_PNG_DIR / src_name
-        if src.exists():
-            shutil.copyfile(src, out_dir / dst_name)
-            out_paths[dst_name] = f"evidence/{dst_name}"
+# Section-8 LT-only colors (consistent with previous palette but single-universe)
+COLOR_LT_PURPLE = "#a371f7"
+COLOR_GOOD_GREEN = "#3fb950"
+COLOR_BAD_RED = "#f85149"
+COLOR_BQI_BLUE = "#58a6ff"
+COLOR_TS_AMBER = "#d29922"
+COLOR_TEN_VIOLET = "#a371f7"
+
+
+def plot_triple_decile_monotonicity_lt_only(ds: Dataset, out_path: Path) -> bool:
+    """Decile monotonicity of LIBERATION_SCORE on Batman LT only (single panel).
+
+    LIBERATION_SCORE is precomputed in the LT input CSV.
+    """
+    if "LIBERATION_SCORE" not in ds.df.columns:
+        print("[WARN] LIBERATION_SCORE column missing in LT CSV; skipping decile LT-only plot")
+        return False
+    sub = ds.df[["LIBERATION_SCORE", "PnL_d020_mediana"]].copy()
+    sub = sub.dropna()
+    if len(sub) < 100:
+        print("[WARN] insufficient rows for decile LT-only plot")
+        return False
+    sub["D"] = pd.qcut(sub["LIBERATION_SCORE"], 10, labels=False, duplicates="drop") + 1
+    rows = []
+    for d in sorted(sub["D"].dropna().unique()):
+        sd = sub[sub["D"] == d]
+        rows.append({"D": int(d), "N": len(sd), "mean": float(sd["PnL_d020_mediana"].mean())})
+    dec = pd.DataFrame(rows)
+    if dec.empty:
+        return False
+
+    universo_mean = float(sub["PnL_d020_mediana"].mean())
+
+    fig, ax = plt.subplots(figsize=(11, 5.6))
+    bars = ax.bar(dec["D"], dec["mean"],
+                  color=COLOR_LT_PURPLE, alpha=0.88,
+                  edgecolor=DARK_BORDER, linewidth=1.2)
+    for i, b in enumerate(bars):
+        v = float(dec.iloc[i]["mean"])
+        if v < 0:
+            b.set_color(COLOR_BAD_RED)
+        elif v < 5:
+            b.set_color("#fb8500")
+        elif v < 10:
+            b.set_color("#ffb703")
+        elif v < 15:
+            b.set_color("#aacc00")
         else:
-            print(f"[WARN] TRIPLE PNG not found: {src}")
+            b.set_color(COLOR_GOOD_GREEN)
+        b.set_edgecolor(DARK_BORDER)
+        b.set_linewidth(1.2)
+
+    ax.axhline(universo_mean, color=DARK_MUTED, linestyle="--", linewidth=1.4, alpha=0.85)
+    ax.text(10.55, universo_mean,
+            f"  Universo Batman LT\n  {universo_mean:+.2f}",
+            va="center", fontsize=9, color=DARK_MUTED, fontweight="bold")
+
+    for i, v in enumerate(dec["mean"]):
+        ax.text(int(dec.iloc[i]["D"]),
+                v + (0.5 if v >= 0 else -0.7),
+                f"{v:+.1f}",
+                ha="center", fontsize=10,
+                color=DARK_TEXT, fontweight="bold")
+
+    spread = float(dec.iloc[-1]["mean"] - dec.iloc[0]["mean"])
+    ax.set_title(f"Monotonia decilica de LIBERATION_SCORE  -  Batman LT (DTE 200+)",
+                 fontsize=13, color=COLOR_LT_PURPLE, pad=12)
+    ax.set_xlabel("Decil de LIBERATION_SCORE  (D1 = peor, D10 = mejor)")
+    ax.set_ylabel("Mean PnL_d020 (puntos)")
+    ax.set_xticks(list(range(1, 11)))
+
+    fig.text(0.5, 0.02,
+             f"Spread D10 - D1 = {spread:+.2f} puntos. Monotonia clara: D10 supera al universo.",
+             ha="center", fontsize=10, color=DARK_MUTED, style="italic")
+    fig.tight_layout(rect=(0, 0.04, 1, 1))
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    return True
+
+
+def plot_triple_loco_comparison_lt_only(out_path: Path) -> bool:
+    """LOCO comparison single panel (LT only) reading EVID_T5_loco.csv."""
+    path = TRIPLE_DIR / "EVID_T5_loco.csv"
+    if not path.exists():
+        print(f"[WARN] EVID_T5_loco.csv missing: {path}")
+        return False
+    loco = pd.read_csv(path)
+    drops = loco[loco["variant"].str.startswith("Drop ")].copy()
+    if drops.empty:
+        return False
+
+    drop_labels = ["Drop BQI", "Drop TS", "Drop TEN"]
+    order_keys = ["Drop BQI (TS+TEN)", "Drop TS (BQI+TEN)", "Drop TEN (BQI+TS)"]
+    drops_idx = drops.set_index("variant").reindex(order_keys)
+    drop_deltas = drops_idx["delta_vs_full_mean"].astype(float).values
+
+    component_colors = {
+        "Drop BQI": COLOR_BQI_BLUE,
+        "Drop TS": COLOR_TS_AMBER,
+        "Drop TEN": COLOR_TEN_VIOLET,
+    }
+    bar_colors = [component_colors[lbl] for lbl in drop_labels]
+
+    fig, ax = plt.subplots(figsize=(11, 5.6))
+    bars = ax.bar(drop_labels, drop_deltas, color=bar_colors,
+                  edgecolor=DARK_BORDER, linewidth=1.2,
+                  alpha=0.92, width=0.55)
+    for i, v in enumerate(drop_deltas):
+        ax.text(i, v - 0.4 if v < 0 else v + 0.2, f"{v:+.2f}",
+                ha="center",
+                va="top" if v < 0 else "bottom",
+                fontsize=12, fontweight="bold",
+                color=DARK_TEXT)
+
+    crit_idx = int(np.argmin(drop_deltas))
+    crit_lbl = drop_labels[crit_idx].replace("Drop ", "")
+    ax.annotate(f"Mas critico:\n{crit_lbl}",
+                xy=(crit_idx, drop_deltas[crit_idx]),
+                xytext=(crit_idx, drop_deltas[crit_idx] - 1.5),
+                ha="center", fontsize=10, fontweight="bold",
+                color=COLOR_BAD_RED,
+                arrowprops=dict(arrowstyle="->", color=COLOR_BAD_RED, lw=1.5))
+
+    ax.axhline(0, color=DARK_MUTED, linewidth=0.8, alpha=0.7)
+    ax.set_title("LOCO  -  Drop in mean PnL_d020 al quitar componente  -  Batman LT (DTE 200+)",
+                 fontsize=13, color=COLOR_LT_PURPLE, pad=12)
+    ax.set_ylabel("Delta vs FULL TRIPLE (puntos)")
+    ax.set_ylim(min(drop_deltas) * 1.4 - 0.5, 1.0)
+
+    crit_delta = float(drop_deltas[crit_idx])
+    fig.text(0.5, 0.02,
+             f"En Batman LT, dropear {crit_lbl} es lo mas costoso ({crit_delta:+.2f} pts). "
+             f"TS_M3 (Ron Bertino) y BQI_V4 aportan valor secundario.",
+             ha="center", fontsize=10, color=DARK_MUTED, style="italic")
+    fig.tight_layout(rect=(0, 0.04, 1, 1))
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    return True
+
+
+def plot_triple_headline_scoreboard_lt_only(out_path: Path) -> bool:
+    """Headline scoreboard LT-only: Universo vs BQI alone vs TRIPLE_GOOD_P80
+    across [Mean d020, WR%, PF, Mean d050]. Reads EVID_T0_master.csv (LT-only)."""
+    path = TRIPLE_DIR / "EVID_T0_master.csv"
+    if not path.exists():
+        print(f"[WARN] EVID_T0_master.csv missing: {path}")
+        return False
+    t = pd.read_csv(path)
+
+    cohorts_keys = ["UNIVERSO", "BQI_V4 top P80", "TRIPLE_GOOD_P80"]
+    cohorts_short = ["Universo", "BQI alone", "TRIPLE P80"]
+    cohort_colors = [DARK_MUTED, COLOR_BQI_BLUE, COLOR_GOOD_GREEN]
+    metric_cols = ["mean_d020", "WR_pct", "PF", "mean_d050"]
+    metrics_labels = ["Mean PnL_d020", "WR%", "PF", "Mean PnL_d050"]
+
+    try:
+        data = t.set_index("label").loc[cohorts_keys][metric_cols].astype(float).values
+    except KeyError as exc:
+        print(f"[WARN] missing cohort in EVID_T0_master.csv: {exc}")
+        return False
+
+    fig, ax = plt.subplots(figsize=(12, 5.8))
+    x = np.arange(len(metrics_labels))
+    width = 0.26
+
+    for ci, ck in enumerate(cohorts_short):
+        offset = (ci - 1) * width
+        bars = ax.bar(x + offset, data[ci], width,
+                      color=cohort_colors[ci], alpha=0.88,
+                      edgecolor=DARK_BORDER, linewidth=1.0,
+                      label=ck)
+        for j, v in enumerate(data[ci]):
+            ax.text(x[j] + offset, v + max(0.5, abs(v) * 0.02),
+                    f"{v:.1f}", ha="center", fontsize=9,
+                    color=DARK_TEXT, fontweight="bold")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(metrics_labels, fontsize=11)
+    ax.set_ylabel("Valor metrica")
+    ax.set_title("Headline metrics  -  Universo vs BQI alone vs TRIPLE_GOOD_P80  -  Batman LT (DTE 200+)",
+                 fontsize=13, color=COLOR_LT_PURPLE, pad=12)
+    ax.legend(loc="upper left", fontsize=10, framealpha=0.9,
+              facecolor=DARK_PANEL, edgecolor=DARK_BORDER)
+    ax.axhline(0, color=DARK_MUTED, linewidth=0.7, alpha=0.6)
+
+    pf_uni = data[0][2]; pf_triple = data[2][2]
+    pf_ratio = pf_triple / pf_uni if pf_uni > 0 else float("nan")
+    fig.text(0.5, 0.02,
+             f"TRIPLE_GOOD_P80 supera al universo y a BQI alone en TODAS las metricas. "
+             f"PF salta de {pf_uni:.2f} (universo) a {pf_triple:.2f} (TRIPLE) -- {pf_ratio:.1f}x.",
+             ha="center", fontsize=10, color=DARK_MUTED, style="italic")
+    fig.tight_layout(rect=(0, 0.04, 1, 1))
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    return True
+
+
+def generate_triple_lt_only_pngs(ds: Dataset, out_dir: Path) -> Dict[str, str]:
+    """Generate the 3 Section-8 PNGs in Batman LT-only versions
+    (replacing the previous LT+MT mixed copies from the global INFOGRAPHIC dir)."""
+    out_paths: Dict[str, str] = {}
+    targets = [
+        ("triple_decile_monotonicity.png",
+         lambda p: plot_triple_decile_monotonicity_lt_only(ds, p)),
+        ("triple_loco_comparison.png",
+         lambda p: plot_triple_loco_comparison_lt_only(p)),
+        ("triple_headline_scoreboard.png",
+         lambda p: plot_triple_headline_scoreboard_lt_only(p)),
+    ]
+    for fname, fn in targets:
+        dst = out_dir / fname
+        try:
+            ok = fn(dst)
+            if ok:
+                out_paths[fname] = f"evidence/{fname}"
+                print(f"[INFO] generated LT-only {fname}")
+            else:
+                print(f"[WARN] LT-only {fname} not generated")
+        except Exception as exc:
+            print(f"[X] failed to generate LT-only {fname}: {exc}")
+            traceback.print_exc()
     return out_paths
 
 
@@ -1128,8 +1336,8 @@ def main(push: bool) -> int:
         curve = compute_continuous_curve(ds, n_boot=500)
         plot_continuous_curve(curve, EVIDENCE_DIR / "tension_continuous_curve.png")
 
-        print("[INFO] copying TRIPLE infographic PNGs")
-        triple_pngs = copy_triple_pngs(EVIDENCE_DIR)
+        print("[INFO] generating TRIPLE Section-8 PNGs (Batman LT-only versions)")
+        triple_pngs = generate_triple_lt_only_pngs(ds, EVIDENCE_DIR)
 
         print("[INFO] building HTML tables")
         tables = {
