@@ -200,6 +200,89 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
 }
 .ev-kpi-tile .v { font-size: 18px; font-weight: 700; color: var(--text); }
 .ev-kpi-tile .l { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+/* ----- Rules block (top) ----- */
+.rules {
+  max-width: 1200px;
+  margin: 18px auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 20px 14px 20px;
+}
+.rules h2 {
+  font-size: 15px;
+  margin: 0 0 8px 0;
+  color: var(--text);
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+.rules h3 {
+  font-size: 11px;
+  margin: 14px 0 4px 0;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  font-weight: 600;
+}
+.rules-baseline {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  padding: 8px 12px;
+  background: #21262d;
+  border-radius: 4px;
+}
+.rules-baseline strong { color: var(--text); }
+.rules-baseline .h { color: #8b949e; font-size: 11px; }
+.rules-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  margin: 4px 0;
+}
+.rules-table th, .rules-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+.rules-table thead th {
+  background: #21262d;
+  color: var(--text);
+  font-weight: 600;
+  font-size: 11.5px;
+}
+.rules-table th:first-child, .rules-table td:first-child {
+  text-align: left;
+  font-weight: 500;
+}
+.rules-table tr.row-fav td:first-child { color: #3fb950; font-weight: 600; }
+.rules-table tr.row-adv td:first-child { color: #f85149; font-weight: 600; }
+.rules-table tr.row-neu td:first-child { color: #d29922; font-weight: 600; }
+.rules-list {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #b6bec9;
+  margin: 4px 0;
+  padding-left: 20px;
+}
+.rules-list li { margin: 3px 0; }
+.rules-list strong { color: var(--text); }
+.rules p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #b6bec9;
+  margin: 4px 0;
+}
+.rules code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: #21262d;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 12px;
+  color: var(--text);
+}
+.rules .row-up { color: #3fb950; }
+.rules .row-down { color: #f85149; }
 </style>
 </head>
 <body>
@@ -212,6 +295,65 @@ h1 { font-size: 18px; margin: 0; font-weight: 600; }
     <div class="label">Ultimo dato <span id="latest-date"></span></div>
     <div><span class="v" id="latest-value">--</span><span class="regime" id="latest-regime">--</span></div>
   </div>
+</div>
+<div class="rules" id="rules">
+  <h2>Como usar TENSION (operativa)</h2>
+  <div class="rules-baseline">
+    <strong>Baseline universo Batman LT</strong> (45,805 trades, 2019-2025):
+    WR 57% / 64% &nbsp;&middot;&nbsp; mean +8 / +20 pts &nbsp;&middot;&nbsp; PF 2.2 / 3.0
+    <span class="h">(d020 / d050)</span>
+  </div>
+
+  <h3>Entry &mdash; TENSION HOY</h3>
+  <table class="rules-table">
+    <thead>
+      <tr>
+        <th>Banda</th>
+        <th>WR vs univ</th>
+        <th>mean vs univ</th>
+        <th>PF vs univ</th>
+        <th>% univ</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="row-fav">
+        <td>FAV (&ge;80)</td>
+        <td><span class="row-up">+22pp / +19pp</span></td>
+        <td><span class="row-up">2.2x / 2.2x</span></td>
+        <td><span class="row-up">4.8x / 6.2x</span></td>
+        <td>16%</td>
+      </tr>
+      <tr class="row-neu">
+        <td>NEU (20-80)</td>
+        <td>~baseline</td>
+        <td>0.9x / 1.1x</td>
+        <td>~baseline</td>
+        <td>48%</td>
+      </tr>
+      <tr class="row-adv">
+        <td>ADV (&le;20)</td>
+        <td><span class="row-down">-9pp / -11pp</span></td>
+        <td><span class="row-down">0.6x / 0.3x</span></td>
+        <td><span class="row-down">0.7x / 0.5x</span></td>
+        <td>36%</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Durante el trade (entry FAV)</h3>
+  <ul class="rules-list">
+    <li><strong>TENSION sigue &ge;80 al d020</strong> (63% de FAV entries):
+      WR 95%, mean 2.8x universo, PF 6x FAV (=111 absoluto).</li>
+    <li><strong>TENSION cae a &le;20 algun dia</strong> (14% en 50d):
+      pierdes 34% del edge FAV (mean cae a 0.66x FAV). NO entra en perdida, senal de monitoreo.</li>
+  </ul>
+
+  <h3>Regla negativa</h3>
+  <p>NO reaccionar a oscilaciones intradia. <code>r(cambio_diario, PnL) = 0</code>.
+  Solo importa la <strong>BANDA</strong> actual, no la trayectoria.</p>
+
+  <h3>Caveat</h3>
+  <p>FAV bate al universo en 4 de 7 anios. Fallos: 2021 (FAV mean -9), 2022 (sin FAV).</p>
 </div>
 <div id="chart" style="height: 580px;"></div>
 <div class="note">
