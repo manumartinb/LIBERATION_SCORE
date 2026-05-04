@@ -31,7 +31,7 @@ import pandas as pd
 SOURCE_CSV = Path(
     r"C:\Users\Administrator\Desktop\BULK OPTIONSTRAT\ESTRATEGIAS\Skew\SURFACE_SKEW_CONCAVITY_COMPONENTS_DAILY.csv"
 )
-DASHBOARD_DIR = Path(r"C:\Users\Administrator\Desktop\LIBERATION_SCORE_DASHBOARD")
+DASHBOARD_DIR = Path(r"C:\Users\Administrator\Desktop\BULK OPTIONSTRAT\ESTRATEGIAS\Skew\dashboards\LIBERATION_SCORE_DASHBOARD")
 DATA_JSON = DASHBOARD_DIR / "data.json"
 
 GH_REPO = "manumartinb/LIBERATION_SCORE_BATMAN_LT"
